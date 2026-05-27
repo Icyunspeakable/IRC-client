@@ -34,3 +34,5 @@ src/
 ```
 
 P2P sync isn't wired up yet — this is single-machine local-first for now.
+
+See [docs/SPEC.md](docs/SPEC.md) for the full project spec and roadmap.
