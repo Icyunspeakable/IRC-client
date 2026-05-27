@@ -2,27 +2,42 @@ import { describe, it, expect } from 'vitest';
 import { mkdtemp, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { JsonlStorageDriver } from '../src/storage/jsonlStorage';
-import { createIdentity } from '../src/identity/identity';
-import { ChatApp } from '../src/core/chatApp';
+import { ChatApp } from '../src/app';
+import { createIdentity } from '../src/identity';
+import { JsonlStorage } from '../src/storage';
 
-describe('storage + rooms + files', () => {
-  it('persists events and room changes and file metadata', async () => {
+describe('ChatApp', () => {
+  it('shows lobby intro with the current nickname', async () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), 'frostchat-'));
-    const storage = new JsonlStorageDriver(dir);
-    const app = new ChatApp(storage, createIdentity('tester'));
+    const storage = new JsonlStorage(dir);
+    const app = new ChatApp(storage, createIdentity('frost'));
+
     await app.init();
     await app.setRoom('dev');
-    await app.sendMessage('hello');
-    const history = await app.history();
-    expect(history.length).toBe(1);
+    expect(app.getRoomIntro()).toEqual([]);
+
+    await app.setRoom('lobby');
+    expect(app.getRoomIntro()[0]).toBe('you are currently logged in as: frost');
+  });
+
+  it('keeps messages and uploads scoped to the active room', async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'frostchat-'));
+    const storage = new JsonlStorage(dir);
+    const app = new ChatApp(storage, createIdentity('tester'));
+
+    await app.init();
+    await app.setRoom('dev');
+    const line = await app.sendMessage('hello');
+
+    expect(line).toContain('hello');
+    expect(await app.getHistory()).toHaveLength(1);
 
     const sample = path.join(dir, 'sample.txt');
     await writeFile(sample, 'abc', 'utf8');
-    const fileRecord = await app.uploadFile(sample);
-    expect(fileRecord.name).toBe('sample.txt');
-    expect(fileRecord.mimeType).toBe('text/plain');
-    const files = await app.listFiles();
-    expect(files.length).toBe(1);
+
+    const uploaded = await app.uploadFile(sample);
+    expect(uploaded.name).toBe('sample.txt');
+    expect(uploaded.mimeType).toBe('text/plain');
+    expect(await app.listFiles()).toHaveLength(1);
   });
 });

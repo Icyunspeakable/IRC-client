@@ -1,5 +1,16 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { BaseEvent, EventType } from '../types/events';
+
+export type EventType = 'message' | 'file';
+
+export interface ChatEvent {
+  id: string;
+  roomId: string;
+  authorPublicKey: string;
+  authorNickname: string;
+  createdAt: string;
+  type: EventType;
+  payload: unknown;
+}
 
 export function createEvent(input: {
   roomId: string;
@@ -7,7 +18,7 @@ export function createEvent(input: {
   authorNickname: string;
   type: EventType;
   payload: unknown;
-}): BaseEvent {
+}): ChatEvent {
   const createdAt = new Date().toISOString();
   return {
     id: createHash('sha256').update(`${randomUUID()}${createdAt}`).digest('hex'),
@@ -17,6 +28,5 @@ export function createEvent(input: {
     createdAt,
     type: input.type,
     payload: input.payload,
-    signature: null,
   };
 }

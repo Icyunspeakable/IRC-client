@@ -1,7 +1,7 @@
 {
-  "name": "frostflare-p2p-chat",
+  "name": "frostchat",
   "version": "0.1.0",
-  "description": "Terminal-first local-first P2P chatroom app with file sharing",
+  "description": "Terminal chat with local jsonl storage",
   "license": "MIT",
   "type": "commonjs",
   "main": "dist/index.js",
@@ -12,9 +12,9 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
+    "cli": "tsx src/index.ts --cli",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "tui": "tsx src/index.ts --tui"
+    "test:watch": "vitest"
   },
   "engines": {
     "node": ">=20"

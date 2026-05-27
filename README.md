@@ -1,35 +1,36 @@
-# FrostChat
+# frostchat
 
-Terminal-first, old-internet-style, local-first chat with append-only events.
+Terminal chat that saves everything locally. Rooms, messages, and file uploads land in `.localdata/` as JSON.
 
-## Stack
-- TypeScript + Node.js
-- Version A: simple CLI loop
-- Version B: nostalgic terminal TUI via blessed
-- JSONL/local JSON persistence (SQLite-swappable storage interface)
-- Mock P2P transport abstraction
+## run it
 
-## Commands
-- `/help`
-- `/nick <name>`
-- `/room <room>`
-- `/msg <message>`
-- `/history`
-- `/upload <path>`
-- `/files`
-- `/quit`
-
-## Run
 ```bash
 npm install
-npm run dev      # Version A (CLI)
-npm run tui      # Version B (blessed TUI)
+npm run dev      # blessed terminal UI (default)
+npm run cli      # plain readline fallback
 ```
 
-## Architecture
-- `src/client` CLI/TUI layer
-- `src/core` domain/events/commands/parser
-- `src/storage` storage interfaces + JSONL driver
-- `src/p2p` transport abstraction + mock
-- `src/files` file metadata helpers
-- `src/identity` local identity keypair generation
+## commands
+
+Everything starts with `/`:
+
+```
+/help  /nick <name>  /room <room>  /msg <text>
+/history  /upload <path>  /files  /quit
+```
+
+## layout
+
+```
+src/
+  app.ts       chat logic
+  commands.ts  slash command parsing + dispatch
+  storage.ts   jsonl persistence
+  events.ts    event types
+  identity.ts  local peer id (random keys for now)
+  cli.ts       readline front-end
+  tui.ts       blessed front-end
+  index.ts     entry point
+```
+
+P2P sync isn't wired up yet — this is single-machine local-first for now.

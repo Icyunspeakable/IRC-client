@@ -20,8 +20,6 @@ data/
 attachments/
 downloads/
 received/
-chunks/
-blobs/
 
 *.db
 *.sqlite
