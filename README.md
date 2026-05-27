@@ -1,4 +1,4 @@
-# FrostChat (MVP)
+# FrostChat
 
 Terminal-first, old-internet-style, local-first chat with append-only events.
 
