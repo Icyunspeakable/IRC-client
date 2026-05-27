@@ -4,7 +4,8 @@ Terminal-first, old-internet-style, local-first chat with append-only events.
 
 ## Stack
 - TypeScript + Node.js
-- CLI command loop (TUI-ready architecture)
+- Version A: simple CLI loop
+- Version B: nostalgic terminal TUI via blessed
 - JSONL/local JSON persistence (SQLite-swappable storage interface)
 - Mock P2P transport abstraction
 
@@ -21,13 +22,14 @@ Terminal-first, old-internet-style, local-first chat with append-only events.
 ## Run
 ```bash
 npm install
-npm run dev
+npm run dev      # Version A (CLI)
+npm run tui      # Version B (blessed TUI)
 ```
 
 ## Architecture
-- `src/client` CLI layer
-- `src/core` domain/events/commands
+- `src/client` CLI/TUI layer
+- `src/core` domain/events/commands/parser
 - `src/storage` storage interfaces + JSONL driver
 - `src/p2p` transport abstraction + mock
-- `src/files` future chunking/hashing expansion
+- `src/files` file metadata helpers
 - `src/identity` local identity keypair generation

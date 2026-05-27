@@ -21,6 +21,7 @@ describe('storage + rooms + files', () => {
     await writeFile(sample, 'abc', 'utf8');
     const fileRecord = await app.uploadFile(sample);
     expect(fileRecord.name).toBe('sample.txt');
+    expect(fileRecord.mimeType).toBe('text/plain');
     const files = await app.listFiles();
     expect(files.length).toBe(1);
   });

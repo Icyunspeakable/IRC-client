@@ -5,6 +5,7 @@ import { createReadStream } from 'node:fs';
 import { createEvent } from './eventFactory';
 import { StorageDriver, AppState, FileRecord } from '../storage/storage';
 import { Identity } from '../identity/identity';
+import { detectMimeType } from '../files/attachments';
 
 export class ChatApp {
   private currentRoom = 'lobby';
@@ -23,51 +24,57 @@ export class ChatApp {
   }
 
   getState(): AppState { return { currentRoom: this.currentRoom, nickname: this.nickname }; }
+  getCurrentRoom(): string { return this.currentRoom; }
 
   async setNick(name: string): Promise<string> {
-    this.nickname = name;
+    if (!name.trim()) return 'Nickname cannot be empty.';
+    this.nickname = name.trim();
     await this.storage.saveState(this.getState());
-    return `Nickname set to ${name}`;
+    return `Nickname set to ${this.nickname}`;
   }
 
   async setRoom(roomId: string): Promise<string> {
-    this.currentRoom = roomId;
+    if (!roomId.trim()) return 'Room cannot be empty.';
+    this.currentRoom = roomId.trim();
     await this.storage.saveState(this.getState());
-    return `Switched to room ${roomId}`;
+    return `Switched to room ${this.currentRoom}`;
   }
 
-  async sendMessage(text: string): Promise<void> {
+  async sendMessage(text: string): Promise<string> {
+    if (!text.trim()) return 'Message cannot be empty.';
     const event = createEvent({
       roomId: this.currentRoom,
       authorPublicKey: this.identity.publicKey,
       authorNickname: this.nickname,
       type: 'message',
-      payload: { text },
+      payload: { text: text.trim() },
     });
     await this.storage.appendEvent(event);
+    return 'Message sent.';
   }
 
   async history(): Promise<string[]> {
     const events = await this.storage.getEventsByRoom(this.currentRoom);
     return events.map((evt) => {
-      const payload = evt.payload as { text?: string } | null;
-      return `[${evt.createdAt}] ${evt.authorNickname}: ${String(payload?.text ?? evt.type)}`;
+      const payload = evt.payload as { text?: string; name?: string } | null;
+      return `[${evt.createdAt}] ${evt.authorNickname}: ${String(payload?.text ?? payload?.name ?? evt.type)}`;
     });
   }
 
   async uploadFile(inputPath: string): Promise<FileRecord> {
-    const s = await stat(inputPath);
-    const fileName = path.basename(inputPath);
-    const hash = await hashFile(inputPath);
+    const normalized = path.resolve(inputPath);
+    const s = await stat(normalized);
+    const fileName = path.basename(normalized);
+    const hash = await hashFile(normalized);
     const attachmentsDir = path.join(process.cwd(), '.localdata', 'attachments');
     await mkdir(attachmentsDir, { recursive: true });
     const targetPath = path.join(attachmentsDir, `${hash}-${fileName}`);
-    await copyFile(inputPath, targetPath);
+    await copyFile(normalized, targetPath);
     const record: FileRecord = {
       fileId: hash,
       name: fileName,
       size: s.size,
-      mimeType: 'application/octet-stream',
+      mimeType: detectMimeType(fileName),
       localPath: targetPath,
       createdAt: new Date().toISOString(),
       roomId: this.currentRoom,

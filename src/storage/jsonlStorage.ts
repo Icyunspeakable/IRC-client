@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile, appendFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, appendFile, rename } from 'node:fs/promises';
 import path from 'node:path';
 import { BaseEvent } from '../types/events';
 import { StorageDriver, FileRecord, AppState } from './storage';
@@ -28,31 +28,28 @@ export class JsonlStorageDriver implements StorageDriver {
   async saveFileRecord(record: FileRecord): Promise<void> {
     const records = await this.getFileRecords();
     records.push(record);
-    await writeFile(this.filesFile(), JSON.stringify(records, null, 2), 'utf8');
+    await this.writeJsonAtomic(this.filesFile(), records);
   }
 
   async getFileRecords(roomId?: string): Promise<FileRecord[]> {
-    const content = await this.safeRead(this.filesFile(), '[]');
-    const parsed = JSON.parse(content) as FileRecord[];
+    const parsed = await this.safeReadJson<FileRecord[]>(this.filesFile(), []);
     return roomId ? parsed.filter((record) => record.roomId === roomId) : parsed;
   }
 
   async saveIdentity(identity: Identity): Promise<void> {
-    await writeFile(this.identityFile(), JSON.stringify(identity, null, 2), 'utf8');
+    await this.writeJsonAtomic(this.identityFile(), identity);
   }
 
   async getIdentity(): Promise<Identity | null> {
-    const content = await this.safeRead(this.identityFile(), '');
-    return content ? (JSON.parse(content) as Identity) : null;
+    return this.safeReadJson<Identity | null>(this.identityFile(), null);
   }
 
   async saveState(state: AppState): Promise<void> {
-    await writeFile(this.stateFile(), JSON.stringify(state, null, 2), 'utf8');
+    await this.writeJsonAtomic(this.stateFile(), state);
   }
 
   async getState(): Promise<AppState | null> {
-    const content = await this.safeRead(this.stateFile(), '');
-    return content ? (JSON.parse(content) as AppState) : null;
+    return this.safeReadJson<AppState | null>(this.stateFile(), null);
   }
 
   private async readLines(filePath: string): Promise<string[]> {
@@ -62,5 +59,17 @@ export class JsonlStorageDriver implements StorageDriver {
 
   private async safeRead(filePath: string, fallback: string): Promise<string> {
     try { return await readFile(filePath, 'utf8'); } catch { return fallback; }
+  }
+
+  private async safeReadJson<T>(filePath: string, fallback: T): Promise<T> {
+    const raw = await this.safeRead(filePath, '');
+    if (!raw) return fallback;
+    try { return JSON.parse(raw) as T; } catch { return fallback; }
+  }
+
+  private async writeJsonAtomic(filePath: string, value: unknown): Promise<void> {
+    const tmpFile = `${filePath}.tmp`;
+    await writeFile(tmpFile, JSON.stringify(value, null, 2), 'utf8');
+    await rename(tmpFile, filePath);
   }
 }
