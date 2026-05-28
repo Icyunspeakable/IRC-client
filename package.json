@@ -23,6 +23,8 @@
     "@chainsafe/libp2p-noise": "^17.0.0",
     "@chainsafe/libp2p-yamux": "^8.0.1",
     "@libp2p/tcp": "^11.0.20",
+    "@libp2p/ping": "^3.1.5",
+    "@multiformats/multiaddr": "^13.0.0",
     "@types/blessed": "^0.1.27",
     "blessed": "^0.1.81",
     "libp2p": "^3.3.2"
